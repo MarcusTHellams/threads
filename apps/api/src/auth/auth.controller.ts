@@ -34,7 +34,7 @@ export class AuthController {
     @Body() { password, username }: { username: string; password: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = await this.authService.signIn(username, password, res);
+    const token = await this.authService.signIn(username, password);
     createAuthCookie(token, res);
   }
 
@@ -45,7 +45,7 @@ export class AuthController {
     @Body() body: Prisma.UserCreateInput,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = await this.authService.signUp(body, res);
+    const token = await this.authService.signUp(body);
     createAuthCookie(token, res);
   }
 

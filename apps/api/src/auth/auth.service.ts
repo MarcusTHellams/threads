@@ -24,7 +24,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async signIn(username: string, password: string, resp: Response) {
+  async signIn(username: string, password: string) {
     const user = await this.usersService.findOneByUsername(username);
 
     const isAMatch = await argon2.verify(user?.password, password);
@@ -37,7 +37,7 @@ export class AuthService {
     return getJwtToken(user, this.jwtService);
   }
 
-  async signUp(body: Prisma.UserCreateInput, resp: Response) {
+  async signUp(body: Prisma.UserCreateInput) {
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
