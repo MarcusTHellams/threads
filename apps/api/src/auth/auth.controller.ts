@@ -10,12 +10,14 @@ import {
   Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
 import { Response } from 'express';
 import { Public } from './decorators/public.decorator';
 import { Prisma } from 'database';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { createAuthCookie, time } from './constants';
+
+const sleep = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 
 @Controller('auth')
 export class AuthController {
@@ -32,16 +34,8 @@ export class AuthController {
     @Body() { password, username }: { username: string; password: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { access_token } = await this.authService.signIn(username, password);
-
-    res
-      .cookie('access_token', access_token, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15 /* 15 days*/),
-      })
-      .send({ status: 'ok' });
+    const token = await this.authService.signIn(username, password, res);
+    createAuthCookie(token, res);
   }
 
   @Public()
@@ -51,35 +45,8 @@ export class AuthController {
     @Body() body: Prisma.UserCreateInput,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          {
-            email: body.email,
-          },
-          {
-            username: body.username,
-          },
-        ],
-      },
-    });
-    if (user) {
-      throw new HttpException(
-        'User already exists',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
-    const { password, username } = await this.usersService.create(body);
-    const { access_token } = await this.authService.signIn(username, password);
-
-    res
-      .cookie('access_token', access_token, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 15 /* 15 days*/),
-      })
-      .send({ status: 'ok' });
+    const token = await this.authService.signUp(body, res);
+    createAuthCookie(token, res);
   }
 
   @HttpCode(HttpStatus.OK)
