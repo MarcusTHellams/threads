@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'database';
 import { Request } from 'express';
-import { usersWithOutPasswords } from './constants';
+import { userWithAll, usersWithOutPasswords } from './constants';
 
 @Injectable()
 export class UsersService {
@@ -15,12 +15,7 @@ export class UsersService {
 
   async findAll() {
     const users = await this.prisma.user.findMany({
-      include: {
-        following: true,
-        followedBy: true,
-        conversations: true,
-        replies: true,
-      },
+      ...userWithAll,
     });
     return usersWithOutPasswords(users);
   }
