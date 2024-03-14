@@ -3,13 +3,16 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { Prisma } from 'database';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
+import { Request } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -18,6 +21,23 @@ export class UsersController {
   @Post()
   create(@Body() createUserDto: Prisma.UserCreateInput) {
     return this.usersService.create(createUserDto);
+  }
+  @Get('follow/:id')
+  async followUnfollowUser(@Param('id') id: string, @Req() req: Request) {
+    try {
+      const follow =
+        (await this.usersService.followUnFollow(id, req)) === 'follow';
+
+      if (follow) {
+        return { message: 'User followed successfully' };
+      }
+      return { message: 'User unfollowed successfully' };
+    } catch (error) {
+      throw new HttpException(
+        (error as Error).message,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get()
@@ -31,8 +51,11 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: Prisma.UserUpdateInput,
+  ) {
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')

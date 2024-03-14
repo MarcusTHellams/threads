@@ -18,6 +18,6 @@ export const createAuthCookie = (access_token: string, resp: Response) => {
 };
 
 export const getJwtToken = (user: User, jwtService: JwtService) => {
-  const payload = { id: user.id, username: user.username };
+  const payload = { id: user.userId, username: user.username };
   return jwtService.signAsync(payload);
 };
